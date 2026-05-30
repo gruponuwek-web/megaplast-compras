@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo · Proceso de compras multi-sucursal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef3f9; --surface:#ffffff; --surface-2:#f4f8fc;
+    --ink:#16273a; --ink-soft:#52647a; --ink-faint:#90a2b6;
+    --line:#d6e3ef; --line-soft:#e6eef6;
+    --accent:#1f6fb2; --accent-ink:#124e80; --accent-soft:#dbeaf8;
+    --ok:#1f8a86; --ok-bg:#d8f0ee; --warn:#a06a1c; --warn-bg:#f7ecd6;
+    --danger:#b03c30; --danger-bg:#f7e2de; --info:#2c6ca6; --info-bg:#e0edf9;
+    --radius:12px; --radius-sm:8px;
+    --shadow:0 1px 2px rgba(22,39,58,.04), 0 6px 18px rgba(22,39,58,.05);
+    --font:"Plus Jakarta Sans",system-ui,sans-serif; --display:"Fraunces",Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{margin:0;font-weight:600}
+  button{font-family:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit;font-size:14px;color:var(--ink)}
+  ::placeholder{color:var(--ink-faint)}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+  /* Header / roles */
+  header.top{background:var(--surface);border-bottom:1px solid var(--line);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:20}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .logo{width:38px;height:38px;border-radius:10px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:600;font-size:20px}
+  .brand .t1{font-family:var(--display);font-size:19px;font-weight:600;letter-spacing:-.01em}
+  .brand .t2{font-size:12px;color:var(--ink-soft)}
+  .roles{display:flex;gap:6px;flex-wrap:wrap}
+  .role-btn{border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);padding:8px 13px;border-radius:99px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:7px;transition:.15s}
+  .role-btn:hover{border-color:var(--accent);color:var(--accent-ink)}
+  .role-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .role-btn .dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.55}
+  .role-btn.locked{opacity:.5;cursor:not-allowed}
+  .role-btn.locked:hover{border-color:var(--line);color:var(--ink-soft)}
+
+  main{max-width:1080px;margin:0 auto;padding:26px 24px 80px}
+
+  /* Page head */
+  .page-head{margin-bottom:20px}
+  .page-head .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:600;margin-bottom:5px}
+  .page-head h2{font-family:var(--display);font-size:27px;letter-spacing:-.02em}
+  .page-head p{color:var(--ink-soft);margin:7px 0 0;max-width:64ch}
+
+  /* Cards */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .card-pad{padding:18px 20px}
+  .card + .card{margin-top:16px}
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 20px;border-bottom:1px solid var(--line-soft)}
+  .card-head h3{font-size:15px}
+  .card-head .sub{font-size:12px;color:var(--ink-soft)}
+
+  /* Buttons */
+  .btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:.15s}
+  .btn:hover{border-color:var(--accent);color:var(--accent-ink)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-ink)}
+  .btn.primary:disabled{background:var(--ink-faint);border-color:var(--ink-faint);cursor:not-allowed;opacity:.6}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--ink-soft);padding:6px 8px}
+  .btn.ghost:hover{color:var(--danger)}
+  .btn.sm{padding:6px 10px;font-size:12px}
+  .backbtn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--accent-ink);background:none;border:none;padding:6px 0;margin-bottom:8px;cursor:pointer}
+
+  /* Fields */
+  .fld{display:flex;flex-direction:column;gap:3px}
+  .fld label{font-size:11px;color:var(--ink-soft);font-weight:500}
+  .fld select,.fld input{height:34px;border:1px solid var(--line);border-radius:8px;padding:0 9px;background:var(--surface)}
+  .fld select:focus,.fld input:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;resize:vertical;min-height:38px}
+  .miniinput{width:84px;height:32px;border:1px solid var(--line);border-radius:7px;padding:0 8px;text-align:right;font-variant-numeric:tabular-nums}
+  .miniinput:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+  /* Search */
+  .search{position:relative;margin-bottom:14px}
+  .search input{width:100%;height:42px;border:1px solid var(--line);border-radius:10px;padding:0 14px 0 40px;background:var(--surface)}
+  .search input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .search .ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-faint)}
+
+  /* Order bar (captura) */
+  .orderbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--line-soft)}
+  .ob-info{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .ob-sum{font-size:13px;color:var(--ink-soft)}
+
+  /* Product rows (captura con casilla) */
+  .ico{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px}
+  .ico.pas{background:var(--accent-soft);color:var(--accent-ink)}
+  .ico.pla{background:var(--ok-bg);color:var(--ok)}
+  .prow{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line-soft);border-radius:10px;margin-bottom:8px;background:var(--surface);transition:.15s}
+  .prow.on{border-color:var(--accent);background:var(--surface-2);box-shadow:inset 3px 0 0 var(--accent)}
+  .prow .nm{flex:1;min-width:150px}
+  .prow .nm b{font-weight:600;font-size:13.5px;display:block}
+  .prow .nm span{font-size:11.5px;color:var(--ink-faint)}
+  .prow .conf{flex-basis:100%;margin-top:2px}
+  .prow .ruleHint{flex-basis:100%;margin-top:0}
+  .pc{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .pc .fld select{min-width:140px}
+  .pc .fld input{width:92px}
+  .conf{font-size:13px;font-weight:600;color:var(--accent-ink);background:var(--accent-soft);display:inline-block;padding:4px 10px;border-radius:7px}
+  .ruleHint{font-size:11.5px;color:var(--warn)}
+  .chkwrap{position:relative;display:flex;align-items:center;cursor:pointer;flex-shrink:0}
+  .chkwrap input{position:absolute;opacity:0;width:22px;height:22px;cursor:pointer;margin:0}
+  .chkbox{width:22px;height:22px;border:1.5px solid var(--line);border-radius:6px;display:flex;align-items:center;justify-content:center;background:var(--surface);transition:.15s;font-size:14px;font-weight:700;color:#fff}
+  .chkwrap input:checked + .chkbox{background:var(--accent);border-color:var(--accent)}
+  .chkwrap input:checked + .chkbox::after{content:"\2713"}
+  .chkwrap input:disabled + .chkbox{opacity:.45}
+
+  /* Edit lines (admin) */
+  .line{border:1px solid var(--line-soft);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--surface-2)}
+  .line .top{display:flex;align-items:flex-start;gap:10px;justify-content:space-between}
+  .line .top b{font-size:13.5px}
+  .line .top span{font-size:11.5px;color:var(--ink-faint)}
+  .line .ctrls{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:flex-end}
+
+  /* Badges */
+  .badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;display:inline-flex;align-items:center;gap:5px}
+  .b-draft{background:var(--line-soft);color:var(--ink-soft)}
+  .b-sent{background:var(--info-bg);color:var(--info)}
+  .b-val{background:var(--ok-bg);color:var(--ok)}
+  .b-warn{background:var(--warn-bg);color:var(--warn)}
+  .b-recibida{background:#e7f2e7;color:#3f8f4f}
+  .b-parcial{background:#eef5e9;color:#3f8f4f;border:1px dashed #3f8f4f}
+
+  /* Tables */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);font-weight:600;padding:9px 10px;border-bottom:1px solid var(--line)}
+  td{padding:10px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  tbody tr:last-child td{border-bottom:none}
+  .tagprov{font-size:11px;color:var(--ink-soft)}
+
+  /* Metrics */
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .metric{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px}
+  .metric .lbl{font-size:12px;color:var(--ink-soft);margin-bottom:6px}
+  .metric .val{font-size:23px;font-weight:600;font-family:var(--display);letter-spacing:-.01em}
+  .metric.good .val{color:var(--ok)} .metric.bad .val{color:var(--danger)} .metric.warn .val{color:var(--warn)}
+
+  /* Misc */
+  .empty{text-align:center;padding:40px 20px;color:var(--ink-faint)}
+  .notice{display:flex;gap:10px;align-items:flex-start;background:var(--info-bg);border:1px solid #cfe0ef;color:var(--info);padding:11px 13px;border-radius:10px;font-size:13px;margin-bottom:16px}
+  .notice.ok{background:var(--ok-bg);border-color:#bfe5e0;color:var(--ok)}
+  .filebtn{font-size:12px;color:var(--accent-ink);cursor:pointer;display:inline-flex;align-items:center;gap:5px;border:1px dashed var(--accent);padding:6px 10px;border-radius:8px}
+  .filebtn input{display:none}
+
+  /* Step bar */
+  .stepline{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-faint);margin-bottom:18px;flex-wrap:wrap}
+  .stepline .s{display:flex;align-items:center;gap:6px}
+  .stepline .s b{color:var(--ink-soft);font-weight:600}
+  .stepline .s.on b{color:var(--accent-ink)}
+  .stepline .s .n{width:18px;height:18px;border-radius:50%;background:var(--line-soft);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+  .stepline .s.on .n{background:var(--accent);color:#fff}
+  .stepline .arrow{color:var(--ink-faint)}
+
+  /* Tabs */
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  .tab{border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);padding:9px 15px;border-radius:10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;transition:.15s}
+  .tab:hover{border-color:var(--accent);color:var(--accent-ink)}
+  .tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .tab .pill{font-size:11px;background:var(--line-soft);color:var(--ink-soft);padding:1px 7px;border-radius:99px}
+  .tab.active .pill{background:rgba(255,255,255,.25);color:#fff}
+
+  /* Route cards (comprador) */
+  .routegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .routecard{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:20px;cursor:pointer;transition:.18s;box-shadow:var(--shadow);position:relative}
+  .routecard:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 10px 26px rgba(31,111,178,.16)}
+  .routecard .rc-ic{width:46px;height:46px;border-radius:12px;background:var(--accent-soft);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:14px}
+  .routecard h3{font-family:var(--display);font-size:21px;letter-spacing:-.01em;margin-bottom:3px}
+  .routecard .rc-prov{font-size:12.5px;color:var(--ink-soft);margin-bottom:16px}
+  .routecard .rc-stats{display:flex;gap:18px;border-top:1px solid var(--line-soft);padding-top:13px}
+  .routecard .rc-stats .v{font-size:19px;font-weight:600;font-family:var(--display);color:var(--accent-ink)}
+  .routecard .rc-stats .k{font-size:11px;color:var(--ink-soft)}
+  .routecard.done{border-color:var(--ok)}
+  .routecard .rc-done{position:absolute;top:14px;right:14px;font-size:11px;font-weight:600;color:var(--ok);background:var(--ok-bg);padding:3px 9px;border-radius:99px}
+
+  /* History rows */
+  .histrow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 16px;border:1px solid var(--line-soft);border-radius:10px;margin-bottom:10px;background:var(--surface-2)}
+  .histrow .hl{display:flex;align-items:center;gap:12px}
+  .histrow .hl .hic{width:38px;height:38px;border-radius:10px;background:var(--info-bg);color:var(--info);display:flex;align-items:center;justify-content:center;font-size:18px}
+  .histrow .hl b{font-size:14px}
+  .histrow .hl span{font-size:12px;color:var(--ink-soft)}
+
+  /* Time fields */
+  .timefields{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .timefields input,.timefields select{height:34px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:var(--surface)}
+  .timefields input:focus,.timefields select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+  /* Calendar */
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .cal .dow{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:600;text-align:center;padding:6px 0}
+  .cal .cell{min-height:80px;border:1px solid var(--line-soft);border-radius:10px;padding:8px;background:var(--surface);display:flex;flex-direction:column;gap:3px}
+  .cal.week .cell{min-height:120px}
+  .cal .cell.blank{border:none;background:transparent}
+  .cal .cell .dnum{font-size:13px;font-weight:600;color:var(--ink-soft)}
+  .cal .cell.order{cursor:pointer;transition:.15s}
+  .cal .cell.order:hover{transform:translateY(-1px);filter:brightness(.98)}
+  .cal .cell .tag{font-size:11px;font-weight:600;margin-top:auto}
+  .cal .cell .cap{font-size:10px;color:var(--ink-faint)}
+  .cal .cell.today{box-shadow:inset 0 0 0 2px var(--accent)}
+  .cal .cell.st-pedido{border-color:var(--accent);background:var(--accent-soft)}
+  .cal .cell.st-pedido .dnum,.cal .cell.st-pedido .tag{color:var(--accent-ink)}
+  .cal .cell.st-enviada{border-color:#9cc3e3;background:var(--info-bg)}
+  .cal .cell.st-enviada .dnum,.cal .cell.st-enviada .tag{color:var(--info)}
+  .cal .cell.st-validada{border-color:#9fd6cf;background:var(--ok-bg)}
+  .cal .cell.st-validada .dnum,.cal .cell.st-validada .tag{color:var(--ok)}
+  .cal .cell.st-proceso{border-color:#e4c98c;background:var(--warn-bg)}
+  .cal .cell.st-proceso .dnum,.cal .cell.st-proceso .tag{color:var(--warn)}
+  .cal .cell.st-recibida{border-color:#a7d3ab;background:#e7f2e7}
+  .cal .cell.st-recibida .dnum,.cal .cell.st-recibida .tag{color:#3f8f4f}
+  .cal .cell.st-parcial{border:1px dashed #3f8f4f;background:#eef5e9}
+  .cal .cell.st-parcial .dnum,.cal .cell.st-parcial .tag{color:#3f8f4f}
+  .callegend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;color:var(--ink-soft)}
+  .callegend span{display:inline-flex;align-items:center;gap:6px}
+  .callegend i{width:12px;height:12px;border-radius:4px;display:inline-block;border:1px solid}
+  .lg-pedido{background:var(--accent-soft);border-color:var(--accent)}
+  .lg-enviada{background:var(--info-bg);border-color:#9cc3e3}
+  .lg-validada{background:var(--ok-bg);border-color:#9fd6cf}
+  .lg-proceso{background:var(--warn-bg);border-color:#e4c98c}
+  .lg-recibida{background:#e7f2e7;border-color:#a7d3ab}
+  .lg-parcial{background:#eef5e9;border:1px dashed #3f8f4f}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <div class="logo">D</div>
+    <div>
+      <div class="t1">Dulce &amp; Plásticos · Compras</div>
+      <div class="t2">Demo del proceso de orden de compra multi-sucursal</div>
+    </div>
+  </div>
+  <nav class="roles" id="roles" aria-label="Selector de rol"></nav>
+</header>
+<main id="app"></main>
+
+<script>
+/* ============================================================
+   1. CATÁLOGO Y CONFIGURACIÓN
+   ============================================================ */
+// captura: unidades permitidas al pedir · min: mínimo de cajas a comprar.
+// Regla: todos los proveedores surten en CAJAS completas (el consolidado redondea hacia arriba).
+const PROVEEDORES = {
+  A:{nombre:"Distribuidora Andrade", ruta:"Ruta Centro",     captura:["caja","pieza"], min:1},
+  B:{nombre:"Mayoreo Bravo",         ruta:"Ruta Sur",        captura:["caja"],          min:2},
+  C:{nombre:"Plásticos Solano",      ruta:"Ruta Industrial", captura:["caja","pieza"], min:1},
+};
+// prov[X] = {factor: piezas por caja, costo: costo por pieza}
+const PRODUCTOS = [
+  {sku:"PAS-001", barcode:"7501000100013", desc:"Harina de trigo 1 kg",       cat:"pas", prov:{A:{factor:10,costo:22}, B:{factor:20,costo:20}}},
+  {sku:"PAS-002", barcode:"7501000100020", desc:"Azúcar refinada 1 kg",       cat:"pas", prov:{A:{factor:10,costo:25}, B:{factor:25,costo:23}}},
+  {sku:"PAS-003", barcode:"7501000100037", desc:"Mantequilla 500 g",          cat:"pas", prov:{A:{factor:24,costo:48}, B:{factor:30,costo:45}}},
+  {sku:"PAS-004", barcode:"7501000100044", desc:"Chispas de chocolate 500 g", cat:"pas", prov:{A:{factor:12,costo:60}}},
+  {sku:"PAS-005", barcode:"7501000100051", desc:"Caja para pastel #20",       cat:"pas", prov:{A:{factor:25,costo:8}}},
+  {sku:"PAS-006", barcode:"7501000100068", desc:"Capacillos (paq. 100 pzs)",  cat:"pas", prov:{A:{factor:50,costo:15}}},
+  {sku:"PLA-001", barcode:"7501000200017", desc:"Vaso plástico 16 oz",        cat:"pla", prov:{C:{factor:1000,costo:0.6}, B:{factor:500,costo:0.65}}},
+  {sku:"PLA-002", barcode:"7501000200024", desc:"Tapa domo 16 oz",            cat:"pla", prov:{C:{factor:1000,costo:0.4}}},
+  {sku:"PLA-003", barcode:"7501000200031", desc:"Cuchara desechable",         cat:"pla", prov:{C:{factor:2000,costo:0.2}, B:{factor:1000,costo:0.22}}},
+  {sku:"PLA-004", barcode:"7501000200048", desc:"Bolsa kraft #6",             cat:"pla", prov:{C:{factor:500,costo:0.9}}},
+  {sku:"PLA-005", barcode:"7501000200055", desc:"Contenedor 16 oz c/tapa",    cat:"pla", prov:{C:{factor:300,costo:1.8}}},
+  {sku:"PLA-006", barcode:"7501000200062", desc:"Charola plástica blanca",    cat:"pla", prov:{C:{factor:200,costo:2.2}}},
+];
+const SUCS = {suc1:"Sucursal 1", suc2:"Sucursal 2", suc3:"Sucursal 3"};
+const ALMACENES = ["Almacén central","Sucursal 1","Sucursal 2","Sucursal 3"];
+const ENCARGADOS = ["— Selecciona —","Laura Méndez","Carlos Ruiz","Ana Torres","Jorge Salas"];
+const RAZONES = ["— Sin cambio —","Faltó stock con el proveedor","Compré de más por descuento","Producto no disponible","Cambió la presentación","Ajuste por precio","Otro motivo"];
+
+/* ============================================================
+   2. ESTADO
+   ============================================================ */
+const state = {
+  role:"inicio",
+  // Orden activa por sucursal (la que recorre el flujo del periodo)
+  ordenes:{
+    suc1:{status:"borrador", lineas:[{sku:"PAS-001",prov:"A",unidad:"caja",cant:3},{sku:"PLA-001",prov:"C",unidad:"pieza",cant:1500}]},
+    suc2:{status:"borrador", lineas:[{sku:"PAS-001",prov:"B",unidad:"caja",cant:2},{sku:"PAS-003",prov:"A",unidad:"pieza",cant:40}]},
+    suc3:{status:"borrador", lineas:[{sku:"PLA-003",prov:"C",unidad:"caja",cant:1}]},
+  },
+  // Pedidos pasados por sucursal (registro para el historial)
+  historial:{
+    suc1:[
+      {folio:"OC-018", fecha:"2026-05-25", status:"validada", lineas:[{sku:"PAS-001",prov:"A",unidad:"caja",cant:2},{sku:"PAS-002",prov:"A",unidad:"caja",cant:1}], recep:{nombre:"Laura Méndez",fecha:"2026-05-26"}},
+      {folio:"OC-011", fecha:"2026-04-27", status:"validada", lineas:[{sku:"PLA-001",prov:"C",unidad:"pieza",cant:1000}], recep:{nombre:"Carlos Ruiz",fecha:"2026-04-28"}},
+    ],
+    suc2:[{folio:"OC-016", fecha:"2026-05-21", status:"validada", lineas:[{sku:"PAS-003",prov:"A",unidad:"pieza",cant:30}], recep:{nombre:"Ana Torres",fecha:"2026-05-22",parcial:true}}],
+    suc3:[{folio:"OC-009", fecha:"2026-04-23", status:"validada", lineas:[{sku:"PLA-003",prov:"C",unidad:"caja",cant:1}], recep:{nombre:"Jorge Salas",fecha:"2026-04-24"}}],
+  },
+  ocSeq:0,                          // contador de folios para órdenes del periodo actual
+  faseCompra:false,                 // admin ya consolidó la compra del periodo
+  compra:{},                        // "sku|prov" -> {comprado, razon, fotos:[], done}
+  entrega:{},                       // "suc|sku|prov" -> {entregado, danado}
+  validacion:{},                    // suc -> {nombre, fecha, llegada, fin}
+  sobrante:{},                      // "sku|prov" -> almacén destino
+  sobranteOk:false,
+  ui:{
+    compradorRuta:null, almacenTab:"suc1", adminTab:"suc1",
+    repMes:"", repDesde:"", repHasta:"", repOrden:null,
+    calVista:"mes", calMes:"2026-05", calRef:"2026-05-29", calSuc:"suc1",
+    histMes:"", histOpen:null,
+  },
+};
+
+/* ============================================================
+   3. HELPERS
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const fmt = n => Number(n).toLocaleString("es-MX");
+const money = n => "$"+Number(n).toLocaleString("es-MX",{minimumFractionDigits:2,maximumFractionDigits:2});
+const slug = s => String(s).replace(/[^a-zA-Z0-9]/g,"_");
+const hoy = () => new Date().toISOString().slice(0,10);
+const getProd = sku => PRODUCTOS.find(p=>p.sku===sku);
+const cfgOf = (sku,prov) => getProd(sku).prov[prov];
+const provsDe = sku => Object.keys(getProd(sku).prov);
+const piezasLinea = l => l.unidad==="caja" ? l.cant*cfgOf(l.sku,l.prov).factor : l.cant;
+const statusBadge = s => ({
+  borrador:`<span class="badge b-draft">● Borrador</span>`,
+  enviada:`<span class="badge b-sent">● Enviada a admin</span>`,
+  validada:`<span class="badge b-val">✓ Validada</span>`,
+}[s] || "");
+function nextFolio(){ state.ocSeq+=1; return "OC-"+String(state.ocSeq).padStart(3,"0"); }
+
+/* Consolida las órdenes validadas por (sku, proveedor) y redondea a cajas completas. */
+function consolidar(pred){
+  const map={};
+  for(const suc in state.ordenes){
+    const o=state.ordenes[suc];
+    if(o.status!=="validada") continue;
+    if(pred && !pred(suc,o)) continue;
+    for(const l of o.lineas){
+      const k=l.sku+"|"+l.prov, pz=piezasLinea(l);
+      if(!map[k]) map[k]={sku:l.sku, prov:l.prov, pedido:0, porSuc:{}};
+      map[k].pedido += pz;
+      map[k].porSuc[suc] = (map[k].porSuc[suc]||0)+pz;
+    }
+  }
+  for(const k in map){
+    const it=map[k], cfg=cfgOf(it.sku,it.prov), prov=PROVEEDORES[it.prov];
+    it.cajas = Math.max(prov.min, Math.ceil(it.pedido/cfg.factor));
+    it.aComprar = it.cajas*cfg.factor;
+    it.sobrantePlan = it.aComprar - it.pedido;
+    it.factor = cfg.factor; it.costo = cfg.costo; it.ruta = prov.ruta;
+  }
+  return map;
+}
+/* Agrupa el consolidado por ruta/proveedor. */
+function porRuta(){
+  const cons=consolidar(), rutas={};
+  for(const k in cons){
+    const it=cons[k];
+    (rutas[it.ruta] = rutas[it.ruta] || {prov:it.prov, items:[]}).items.push({k,...it});
+  }
+  return rutas;
+}
+
+/* ============================================================
+   4. RAÍZ Y NAVEGACIÓN
+   ============================================================ */
+function render(){
+  renderRoles();
+  const v={inicio:renderInicio, suc1:renderSuc, suc2:renderSuc, suc3:renderSuc,
+           admin:renderAdmin, comprador:renderComprador, almacen:renderAlmacen, reporte:renderReporte}[state.role];
+  $("app").innerHTML = v(state.role);
+  if(v===renderSuc) bindSuc(state.role);
+}
+function renderRoles(){
+  const lk = !state.faseCompra;
+  const items=[
+    ["inicio","Inicio",false],["suc1","Sucursal 1",false],["suc2","Sucursal 2",false],["suc3","Sucursal 3",false],
+    ["admin","Administración",false],["comprador","Comprador",lk],["almacen","Almacén / Entrega",lk],["reporte","Reporte",lk],
+  ];
+  $("roles").innerHTML = items.map(([id,lbl,locked])=>
+    `<button class="role-btn ${state.role===id?'active':''} ${locked?'locked':''}" ${locked?'disabled':''} onclick="setRole('${id}')"><span class="dot"></span>${lbl}</button>`
+  ).join("");
+}
+function setRole(r){
+  if(!state.faseCompra && ["comprador","almacen","reporte"].includes(r)) return;
+  state.role=r; render(); window.scrollTo(0,0);
+}
+function stepBar(active){
+  const steps=[["captura","1","Captura"],["admin","2","Validación"],["compra","3","Compra"],["entrega","4","Entrega"],["cierre","5","Reporte"]];
+  return `<div class="stepline">${steps.map((s,i)=>
+    `<div class="s ${s[0]===active?'on':''}"><span class="n">${s[1]}</span><b>${s[2]}</b></div>${i<steps.length-1?'<span class="arrow">→</span>':''}`
+  ).join("")}</div>`;
+}
+
+/* ============================================================
+   5. INICIO · CALENDARIO
+   ============================================================ */
+function dateStr(date){
+  const y=date.getFullYear(), m=String(date.getMonth()+1).padStart(2,"0"), d=String(date.getDate()).padStart(2,"0");
+  return `${y}-${m}-${d}`;
+}
+function esDiaPedido(wd){ return wd===1 || wd===4; }            // lunes o jueves
+// ¿La recepción de la sucursal quedó incompleta? (entregado < a entregar en alguna línea)
+function recepcionParcial(suc){
+  const cons=consolidar();
+  for(const k in cons){
+    const it=cons[k]; if(!it.porSuc[suc]) continue;
+    const e=state.entrega[suc+"|"+k]; const ent=e?e.entregado:it.porSuc[suc];
+    if(ent < it.porSuc[suc]) return true;
+  }
+  return false;
+}
+// Etapa de la orden ACTIVA de una sucursal (fuente única para calendario y reporte).
+function faseOrdenActiva(suc){
+  const o=state.ordenes[suc];
+  if(o.status==="borrador") return {fase:"pedido", label:"Borrador"};
+  if(state.validacion[suc]) return recepcionParcial(suc) ? {fase:"parcial", label:"Recibida parcial"} : {fase:"recibida", label:"Recibida"};
+  if(state.faseCompra && o.status==="validada") return {fase:"proceso", label:"En compra"};
+  if(o.status==="validada") return {fase:"validada", label:"Validada"};
+  return {fase:"enviada", label:"En revisión"};
+}
+function badgeEtapa(fase,label){
+  const cls={validada:"b-val", proceso:"b-warn", recibida:"b-recibida", parcial:"b-parcial", enviada:"b-sent"}[fase]||"b-val";
+  const check = (fase==="recibida"||fase==="parcial"||fase==="validada") ? "✓ " : "";
+  return `<span class="badge ${cls}">${check}${label}</span>`;
+}
+// Devuelve la etapa del pedido de esa fecha para la sucursal, o null si no hay pedido.
+function etapaDia(suc,ds){
+  const o=state.ordenes[suc];
+  if(o.fecha===ds && o.status!=="borrador"){
+    const f=faseOrdenActiva(suc);
+    return {fase:f.fase, label:f.label, folio:o.folio||"", id:suc+"-act"};
+  }
+  const i=state.historial[suc].findIndex(h=>h.fecha===ds);
+  if(i>=0){ const h=state.historial[suc][i];
+    if(h.recep) return {fase: h.recep.parcial?"parcial":"recibida", label: h.recep.parcial?"Recibida parcial":"Recibida", folio:h.folio||"", id:suc+"-h"+i};
+    return {fase:"validada", label:"Validada", folio:h.folio||"", id:suc+"-h"+i};
+  }
+  return null;
+}
+function celdaCal(d,ds,order,suc,esHoy){
+  const et=etapaDia(suc,ds);
+  if(et) return `<div class="cell order st-${et.fase} ${esHoy?'today':''}" onclick="irOrden('${suc}','${et.id}')">
+    <span class="dnum">${d}</span>
+    <span class="tag">${et.label}</span>${et.folio?`<span class="cap">${et.folio}</span>`:""}
+  </div>`;
+  if(order) return `<div class="cell order st-pedido ${esHoy?'today':''}" onclick="abrirPedido('${ds}')">
+    <span class="dnum">${d}</span>
+    <span class="tag">Haz tu pedido</span><span class="cap">antes de 12:00</span>
+  </div>`;
+  return `<div class="cell ${esHoy?'today':''}"><span class="dnum" style="color:var(--ink-faint)">${d}</span></div>`;
+}
+function gridMes(Y,M,suc){
+  const inicio=(new Date(Y,M-1,1).getDay()+6)%7;     // offset con lunes primero
+  const dias=new Date(Y,M,0).getDate();
+  const dow=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].map(d=>`<div class="dow">${d}</div>`).join("");
+  let cells=""; for(let i=0;i<inicio;i++) cells+=`<div class="cell blank"></div>`;
+  for(let d=1; d<=dias; d++){
+    const date=new Date(Y,M-1,d), ds=dateStr(date), wd=date.getDay();
+    cells+=celdaCal(d,ds,esDiaPedido(wd),suc,ds===hoy());
+  }
+  return `<div class="cal">${dow}${cells}</div>`;
+}
+function gridSemana(monday,suc){
+  const dowN=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"]; let head="",body="";
+  for(let i=0;i<7;i++){
+    const date=new Date(monday); date.setDate(monday.getDate()+i);
+    const ds=dateStr(date), wd=date.getDay();
+    head+=`<div class="dow">${dowN[i]}</div>`;
+    body+=celdaCal(date.getDate(),ds,esDiaPedido(wd),suc,ds===hoy());
+  }
+  return `<div class="cal week">${head}${body}</div>`;
+}
+function irOrden(suc,id){ state.ui.histOpen=id; state.ui.calSuc=suc; state.role=suc; render(); window.scrollTo(0,0); }
+function renderInicio(){
+  const vista=state.ui.calVista, suc=state.ui.calSuc;
+  const sucSel=Object.keys(SUCS).map(s=>`<option value="${s}" ${s===suc?"selected":""}>${SUCS[s]}</option>`).join("");
+  const meses=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  let grid, label, prev, next;
+  if(vista==="mes"){
+    const [Y,M]=state.ui.calMes.split("-").map(Number);
+    label=`${meses[M-1]} ${Y}`; prev="calMesNav(-1)"; next="calMesNav(1)"; grid=gridMes(Y,M,suc);
+  } else {
+    const ref=new Date(state.ui.calRef+"T00:00:00");
+    const monday=new Date(ref); monday.setDate(ref.getDate()-((ref.getDay()+6)%7));
+    const sunday=new Date(monday); sunday.setDate(monday.getDate()+6);
+    label=`${monday.getDate()} ${meses[monday.getMonth()].slice(0,3)} – ${sunday.getDate()} ${meses[sunday.getMonth()].slice(0,3)}`;
+    prev="calSemNav(-1)"; next="calSemNav(1)"; grid=gridSemana(monday,suc);
+  }
+  return `
+  <div class="page-head">
+    <div class="eyebrow">Inicio · Calendario de pedidos</div>
+    <h2>¿Cuándo toca pedir?</h2>
+    <p>Los pedidos se levantan <b>lunes y jueves antes de las 12:00</b>. Cada día marcado cambia de color y mensaje según la etapa del pedido, e indica el folio de la orden de compra. Da clic para hacer un pedido nuevo o ver el que ya existe.</p>
+  </div>
+  <div class="card"><div class="card-pad" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <div class="fld"><label>Sucursal</label>
+      <select onchange="setCalSuc(this.value)" style="min-width:150px">${sucSel}</select></div>
+    <div class="tabs" style="margin:0">
+      <button class="tab ${vista==='mes'?'active':''}" onclick="setCalVista('mes')">Mes</button>
+      <button class="tab ${vista==='semana'?'active':''}" onclick="setCalVista('semana')">Semana</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+      <button class="btn sm" onclick="${prev}">‹</button>
+      <b style="min-width:160px;text-align:center;text-transform:capitalize">${label}</b>
+      <button class="btn sm" onclick="${next}">›</button>
+    </div>
+  </div></div>
+  <div class="card" style="margin-top:16px"><div class="card-pad">
+    <div class="callegend">
+      <span><i class="lg-pedido"></i> Haz tu pedido</span>
+      <span><i class="lg-enviada"></i> En revisión</span>
+      <span><i class="lg-validada"></i> Validada</span>
+      <span><i class="lg-proceso"></i> En compra</span>
+      <span><i class="lg-recibida"></i> Recibida</span>
+      <span><i class="lg-parcial"></i> Recibida parcial</span>
+    </div>
+    ${grid}
+  </div></div>`;
+}
+function setCalVista(v){ state.ui.calVista=v; render(); }
+function setCalSuc(s){ state.ui.calSuc=s; render(); }
+function calMesNav(delta){
+  let [Y,M]=state.ui.calMes.split("-").map(Number); M+=delta;
+  if(M<1){M=12;Y--;} if(M>12){M=1;Y++;}
+  state.ui.calMes=`${Y}-${String(M).padStart(2,"0")}`; render();
+}
+function calSemNav(delta){ const d=new Date(state.ui.calRef+"T00:00:00"); d.setDate(d.getDate()+delta*7); state.ui.calRef=dateStr(d); render(); }
+function archivarOrden(suc){
+  const o=state.ordenes[suc];
+  if(o.lineas.length) state.historial[suc].unshift({
+    folio:o.folio||"", fecha:o.fecha||hoy(), status:o.status, lineas:o.lineas.map(l=>({...l})),
+    recep: state.validacion[suc]?{...state.validacion[suc]}:null,
+  });
+}
+function abrirPedido(date){
+  const suc=state.ui.calSuc, o=state.ordenes[suc];
+  if(o.status!=="borrador"){
+    if(state.faseCompra){ state.role=suc; render(); window.scrollTo(0,0); return; }
+    archivarOrden(suc); state.ordenes[suc]={status:"borrador", lineas:[], fecha:date};
+  } else { o.fecha=date; }
+  state.role=suc; render(); window.scrollTo(0,0);
+}
+function nuevoPedido(suc){
+  const o=state.ordenes[suc];
+  if(o.status!=="borrador"){
+    if(state.faseCompra){ alert("La compra del periodo ya se generó; en este demo no puedes iniciar un nuevo pedido."); return; }
+    archivarOrden(suc); state.ordenes[suc]={status:"borrador", lineas:[], fecha:hoy()};
+  }
+  state.role=suc; render(); window.scrollTo(0,0);
+}
+
+/* ============================================================
+   6. SUCURSAL · CAPTURA E HISTORIAL
+   ============================================================ */
+function renderSuc(suc){
+  return state.ordenes[suc].status==="borrador" ? renderCaptura(suc) : renderHistorial(suc);
+}
+function bindSuc(suc){ if(state.ordenes[suc].status==="borrador") renderList(suc); }
+function lineOf(suc,sku){ return state.ordenes[suc].lineas.find(l=>l.sku===sku); }
+
+function renderCaptura(suc){
+  return `
+  ${stepBar("captura")}
+  <div class="page-head">
+    <div class="eyebrow">${SUCS[suc]} · Levantar pedido</div>
+    <h2>¿Qué necesitas surtir?</h2>
+    <p>Palomea los productos que vas a pedir. Al marcarlos, en el mismo renglón eliges proveedor, unidad y cantidad. Cuando termines, envía la orden a Administración.</p>
+  </div>
+  <div class="card">
+    <div class="orderbar">
+      <div class="ob-info">${statusBadge("borrador")}<span class="ob-sum" id="obSummary"></span></div>
+      <button class="btn primary" id="btnEnviar" onclick="confirmarOrden('${suc}')">Enviar orden ▸</button>
+    </div>
+    <div class="card-pad">
+      <div class="search"><span class="ic">🔍</span><input id="q" placeholder="Buscar harina, vaso, PLA-001, 7501..." oninput="renderList('${suc}')"></div>
+      <div id="plist"></div>
+    </div>
+  </div>`;
+}
+function lineConfText(l){
+  const cfg=cfgOf(l.sku,l.prov), pz=piezasLinea(l);
+  if(l.unidad==="caja") return `Estás pidiendo ${fmt(l.cant)} ${l.cant===1?"caja":"cajas"} de ${fmt(cfg.factor)} = ${fmt(pz)} piezas`;
+  return `Estás pidiendo ${fmt(pz)} ${pz===1?"pieza":"piezas"}`;
+}
+function renderList(suc){
+  const q=($("q")?.value||"").trim().toLowerCase();
+  const list=PRODUCTOS.filter(p=> !q || p.desc.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || p.barcode.includes(q));
+  $("plist").innerHTML = list.map(p=>{
+    const l=lineOf(suc,p.sku), on=!!l;
+    let controls="", conf="", hint="";
+    if(on){
+      const provSel=provsDe(p.sku).map(pv=>`<option value="${pv}" ${pv===l.prov?"selected":""}>${PROVEEDORES[pv].nombre}</option>`).join("");
+      const uOpts=PROVEEDORES[l.prov].captura.map(u=>`<option value="${u}" ${u===l.unidad?"selected":""}>${u==="caja"?"Caja":"Pieza"}</option>`).join("");
+      controls=`<div class="pc">
+        <div class="fld"><label>Proveedor</label><select onchange="setProv('${suc}','${p.sku}',this.value)">${provSel}</select></div>
+        <div class="fld"><label>Unidad</label><select onchange="setUnidad('${suc}','${p.sku}',this.value)">${uOpts}</select></div>
+        <div class="fld"><label>Cantidad</label><input type="number" min="0" step="1" value="${l.cant}" oninput="setCant('${suc}','${p.sku}',this.value)"></div>
+      </div>`;
+      conf=`<div class="conf" id="conf_${p.sku}">${lineConfText(l)}</div>`;
+      if(PROVEEDORES[l.prov].captura.length===1) hint=`<div class="ruleHint">↳ ${PROVEEDORES[l.prov].nombre} solo vende por caja.</div>`;
+    }
+    return `<div class="prow ${on?'on':''}">
+      <label class="chkwrap"><input type="checkbox" ${on?"checked":""} onchange="toggleProd('${suc}','${p.sku}',this.checked)"><span class="chkbox"></span></label>
+      <div class="ico ${p.cat}">${p.cat==="pas"?"🧁":"🥤"}</div>
+      <div class="nm"><b>${p.desc}</b><span>${p.sku} · ${p.barcode}</span></div>
+      ${controls}${conf}${hint}
+    </div>`;
+  }).join("") || `<div class="empty">Sin resultados para “${q}”.</div>`;
+  updateSummary(suc);
+}
+function toggleProd(suc,sku,checked){
+  const o=state.ordenes[suc];
+  if(checked){ const prov=provsDe(sku)[0]; o.lineas.push({sku,prov,unidad:PROVEEDORES[prov].captura[0],cant:1}); }
+  else { const i=o.lineas.findIndex(l=>l.sku===sku); if(i>=0) o.lineas.splice(i,1); }
+  renderList(suc);
+}
+function setProv(suc,sku,prov){
+  const l=lineOf(suc,sku); l.prov=prov;
+  if(!PROVEEDORES[prov].captura.includes(l.unidad)) l.unidad=PROVEEDORES[prov].captura[0];
+  renderList(suc);
+}
+function setUnidad(suc,sku,u){ lineOf(suc,sku).unidad=u; renderList(suc); }
+function setCant(suc,sku,v){                                   // sin re-render: permite escribir libremente
+  const l=lineOf(suc,sku); l.cant=Math.max(0,Math.round(Number(v)||0));
+  const el=$("conf_"+sku); if(el) el.textContent=lineConfText(l);
+  updateSummary(suc);
+}
+function updateSummary(suc){
+  const o=state.ordenes[suc], n=o.lineas.length;
+  const pz=o.lineas.reduce((s,l)=>s+piezasLinea(l),0);
+  const mx=o.lineas.reduce((s,l)=>s+piezasLinea(l)*cfgOf(l.sku,l.prov).costo,0);
+  const el=$("obSummary"); if(el) el.textContent = n ? `${n} producto(s) · ${fmt(pz)} piezas · estimado ${money(mx)}` : "Ningún producto seleccionado todavía";
+  const b=$("btnEnviar"); if(b) b.disabled = n===0;
+}
+function confirmarOrden(suc){
+  const o=state.ordenes[suc];
+  if(!o.lineas.length) return;
+  o.status="enviada"; if(!o.fecha) o.fecha=hoy(); if(!o.folio) o.folio=nextFolio();
+  render();
+}
+function renderHistorial(suc){
+  const o=state.ordenes[suc], mes=state.ui.histMes, entries=[];
+  if(o.status!=="borrador") entries.push({id:suc+"-act", folio:o.folio||"", fecha:o.fecha||hoy(), lineas:o.lineas, status:o.status, recep:state.validacion[suc]||null, parcial:state.validacion[suc]?recepcionParcial(suc):false, actual:true});
+  state.historial[suc].forEach((h,i)=>entries.push({id:suc+"-h"+i, folio:h.folio||"", fecha:h.fecha, lineas:h.lineas, status:h.status, recep:h.recep||null, parcial:h.recep&&h.recep.parcial}));
+  entries.sort((a,b)=> b.fecha.localeCompare(a.fecha));
+  const filt=entries.filter(e=> !mes || e.fecha.startsWith(mes));
+  const rows=filt.map(e=>{
+    const pz=e.lineas.reduce((s,l)=>s+piezasLinea(l),0);
+    const mx=e.lineas.reduce((s,l)=>s+piezasLinea(l)*cfgOf(l.sku,l.prov).costo,0);
+    const open=state.ui.histOpen===e.id;
+    let det="";
+    if(open){
+      const lr=e.lineas.map(l=>{const p=getProd(l.sku);
+        return `<tr><td>${p.desc}<div class="tagprov">${p.sku}</div></td><td>${PROVEEDORES[l.prov].nombre}</td><td>${l.unidad==="caja"?fmt(l.cant)+" caja(s)":fmt(l.cant)+" pz"}</td><td class="num">${fmt(piezasLinea(l))}</td></tr>`;}).join("");
+      const rec=e.recep?`<div style="font-size:12px;color:${e.parcial?'var(--warn)':'var(--ok)'};padding:8px 8px 0">✓ Recibió ${e.recep.nombre} · ${e.recep.fecha}${e.parcial?' · recepción parcial':''}</div>`:"";
+      det=`<div class="card" style="margin:0 0 10px;box-shadow:none"><div class="card-pad" style="padding:0 6px">${rec}<table><thead><tr><th>Producto</th><th>Proveedor</th><th>Captura</th><th class="num">Piezas</th></tr></thead><tbody>${lr}</tbody></table></div></div>`;
+    }
+    return `<div class="histrow" onclick="toggleHist('${e.id}')" style="cursor:pointer">
+        <div class="hl"><div class="hic">${open?"▾":"📦"}</div>
+          <div><b>Pedido ${e.fecha}${e.folio?' · '+e.folio:''}${e.actual?' · actual':''}</b><br><span>${e.lineas.length} productos · ${fmt(pz)} piezas · ${money(mx)}</span></div></div>
+        ${statusBadge(e.status)}
+      </div>${det}`;
+  }).join("") || `<div class="empty">No hay pedidos en el periodo seleccionado.</div>`;
+  return `
+  ${stepBar(o.status==="validada"?"admin":"captura")}
+  <div class="page-head">
+    <div class="eyebrow">${SUCS[suc]} · Historial de pedidos</div>
+    <h2>Pedidos de ${SUCS[suc]}</h2>
+    <p>Aquí ves los pedidos enviados. Da clic en uno para ver su detalle. Para iniciar uno nuevo usa el botón o el calendario de Inicio.</p>
+  </div>
+  <div class="card"><div class="card-pad" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <div class="fld"><label>Mes</label><input type="month" value="${mes}" oninput="setHistMes(this.value)"></div>
+    <button class="btn sm" onclick="setHistMes('')">Ver todos</button>
+    <button class="btn primary" style="margin-left:auto" onclick="nuevoPedido('${suc}')">+ Hacer nuevo pedido</button>
+  </div></div>
+  <div style="margin-top:16px">${rows}</div>`;
+}
+function toggleHist(id){ state.ui.histOpen = state.ui.histOpen===id ? null : id; render(); }
+function setHistMes(v){ state.ui.histMes=v; render(); }
+
+/* ============================================================
+   7. ADMINISTRACIÓN
+   ============================================================ */
+function renderAdmin(){
+  const enviadas=Object.values(state.ordenes).filter(o=>o.status==="enviada").length;
+  const validadas=Object.values(state.ordenes).filter(o=>o.status==="validada").length;
+  const puedeGenerar = validadas>0 && !state.faseCompra;
+  const tab=state.ui.adminTab;
+  const tabs=Object.keys(SUCS).map(suc=>{
+    const o=state.ordenes[suc];
+    const mark = o.status==="validada"?"✓ ":o.status==="enviada"?"● ":"";
+    return `<button class="tab ${tab===suc?'active':''}" onclick="setAdminTab('${suc}')">${mark}${SUCS[suc]} <span class="pill">${o.lineas.length}</span></button>`;
+  }).join("");
+  return `
+  ${stepBar("admin")}
+  <div class="page-head">
+    <div class="eyebrow">Administración · Comando de órdenes</div>
+    <h2>Revisar, editar y validar</h2>
+    <p>Elige una sucursal para revisar su orden. Aquí sí se edita: ajusta proveedor, unidad o cantidad, agrega lo que falte y quita lo que no proceda. Cuando esté lista, valídala; con al menos una validada podrás consolidar la compra.</p>
+  </div>
+  <div class="notice ${state.faseCompra?'ok':''}">
+    ${state.faseCompra ? "✓ Compra generada. El tablero de compra y el de entrega ya están activos."
+      : `${enviadas} por revisar · ${validadas} validada(s). Edita lo necesario y valida.`}
+  </div>
+  <div class="tabs">${tabs}</div>
+  ${panelAdmin(tab)}
+  <div class="card"><div class="card-pad" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div><b>Consolidar compra</b><div class="sub" style="color:var(--ink-soft);font-size:12.5px">Agrupa las órdenes validadas por proveedor, redondea a cajas completas y prepara las rutas.</div></div>
+    <button class="btn primary" ${puedeGenerar?"":"disabled"} onclick="generarCompra()">Generar tablero de compra ▸</button>
+  </div></div>`;
+}
+function setAdminTab(suc){ state.ui.adminTab=suc; render(); window.scrollTo(0,0); }
+function panelAdmin(suc){
+  const o=state.ordenes[suc];
+  const edit = o.status==="enviada" && !state.faseCompra;
+  let inner;
+  if(edit){
+    inner = o.lineas.map((l,i)=>{
+      const p=getProd(l.sku);
+      const provSel=provsDe(l.sku).map(pv=>`<option value="${pv}" ${pv===l.prov?"selected":""}>${PROVEEDORES[pv].nombre}</option>`).join("");
+      const uOpts=PROVEEDORES[l.prov].captura.map(u=>`<option value="${u}" ${u===l.unidad?"selected":""}>${u==="caja"?"Caja":"Pieza"}</option>`).join("");
+      return `<div class="line">
+        <div class="top"><div><b>${p.desc}</b> <span>· ${p.sku}</span></div>
+          <button class="btn ghost" title="Quitar de la orden" onclick="admDel('${suc}',${i})">✕</button></div>
+        <div class="ctrls">
+          <div class="fld"><label>Proveedor</label><select onchange="admProv('${suc}',${i},this.value)">${provSel}</select></div>
+          <div class="fld"><label>Unidad</label><select onchange="admUni('${suc}',${i},this.value)">${uOpts}</select></div>
+          <div class="fld"><label>Cantidad</label><input type="number" min="0" step="1" value="${l.cant}" oninput="admCant('${suc}',${i},this.value)"></div>
+          <div class="fld"><label>Equivale a</label><div style="height:34px;display:flex;align-items:center;font-weight:600;color:var(--accent-ink)" id="admPz_${suc}_${i}">${fmt(piezasLinea(l))} pz</div></div>
+        </div>
+      </div>`;
+    }).join("") || `<div class="empty" style="padding:20px">Esta orden quedó vacía. Agrega productos abajo.</div>`;
+    const disp=PRODUCTOS.filter(p=>!o.lineas.some(l=>l.sku===p.sku));
+    inner += `<div style="margin-top:6px;padding-top:14px;border-top:1px solid var(--line-soft);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:12.5px;color:var(--ink-soft)">¿Falta algo que la sucursal no pidió?</span>
+      <select onchange="admAddProd('${suc}',this.value)" style="height:36px;border:1px solid var(--accent);border-radius:9px;padding:0 10px;background:var(--surface);min-width:260px;color:var(--accent-ink);font-weight:600">
+        <option value="">+ Agregar producto…</option>
+        ${disp.map(p=>`<option value="${p.sku}">${p.desc} · ${p.sku}</option>`).join("")}
+      </select>
+    </div>`;
+  } else {
+    const rows=o.lineas.map(l=>{const p=getProd(l.sku),pz=piezasLinea(l);
+      return `<tr><td>${p.desc}<div class="tagprov">${PROVEEDORES[l.prov].nombre} · ${PROVEEDORES[l.prov].ruta}</div></td>
+        <td>${l.unidad==="caja"?fmt(l.cant)+" caja(s)":fmt(l.cant)+" pz"}</td>
+        <td class="num">${fmt(pz)}</td><td class="num">${money(pz*cfgOf(l.sku,l.prov).costo)}</td></tr>`;}).join("")
+      || `<tr><td colspan="4" style="color:var(--ink-faint)">Sin renglones</td></tr>`;
+    inner=`<table><thead><tr><th>Producto</th><th>Captura</th><th class="num">Piezas</th><th class="num">Estimado</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  const tot=o.lineas.reduce((s,l)=>s+piezasLinea(l)*cfgOf(l.sku,l.prov).costo,0);
+  const acc = edit
+    ? `<span class="ob-sum" id="admTot_${suc}">${money(tot)} estimado</span><button class="btn primary sm" onclick="validar('${suc}')">Validar orden</button>`
+    : o.status==="validada" ? `<span class="badge b-val">✓ Validada</span> ${!state.faseCompra?`<button class="btn ghost sm" onclick="devolver('${suc}')">Reabrir y editar</button>`:""}`
+    : `<span class="badge b-draft">Aún en la sucursal</span>`;
+  return `<div class="card">
+    <div class="card-head"><div><h3>${SUCS[suc]}</h3><span class="sub">${o.lineas.length} productos${o.fecha?" · "+o.fecha:""}</span></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${acc}</div></div>
+    <div class="card-pad" style="${edit?'':'padding:0 6px'}">${inner}</div></div>`;
+}
+function admProv(suc,i,prov){ const l=state.ordenes[suc].lineas[i]; l.prov=prov; if(!PROVEEDORES[prov].captura.includes(l.unidad)) l.unidad=PROVEEDORES[prov].captura[0]; render(); }
+function admUni(suc,i,u){ state.ordenes[suc].lineas[i].unidad=u; render(); }
+function admCant(suc,i,v){                                     // sin re-render
+  const l=state.ordenes[suc].lineas[i]; l.cant=Math.max(0,Math.round(Number(v)||0));
+  const pz=$("admPz_"+suc+"_"+i); if(pz) pz.textContent=fmt(piezasLinea(l))+" pz";
+  const t=$("admTot_"+suc); if(t) t.textContent=money(state.ordenes[suc].lineas.reduce((s,x)=>s+piezasLinea(x)*cfgOf(x.sku,x.prov).costo,0))+" estimado";
+}
+function admDel(suc,i){ state.ordenes[suc].lineas.splice(i,1); render(); }
+function admAddProd(suc,sku){
+  if(!sku) return;
+  const prov=provsDe(sku)[0];
+  state.ordenes[suc].lineas.push({sku,prov,unidad:PROVEEDORES[prov].captura[0],cant:1});
+  render();
+}
+function validar(suc){ if(!state.ordenes[suc].lineas.length) return; state.ordenes[suc].status="validada"; render(); }
+function devolver(suc){ if(state.faseCompra) return; state.ordenes[suc].status="enviada"; render(); }
+function generarCompra(){
+  const cons=consolidar();
+  for(const k in cons){ if(!state.compra[k]) state.compra[k]={comprado:cons[k].aComprar, razon:"", fotos:[], done:false}; }
+  state.faseCompra=true; state.role="comprador"; state.ui.compradorRuta=null;
+  render(); window.scrollTo(0,0);
+}
+
+/* ============================================================
+   8. COMPRADOR · TABLERO 1 (por ruta)
+   ============================================================ */
+function difCellHTML(dif,razon){
+  if(dif===0) return `<span class="tagprov">igual al plan</span>`;
+  const txt = dif>0?`+${fmt(dif)} de más`:`${fmt(dif)} de menos`;
+  const falta = !razon || razon===RAZONES[0];
+  return `<span style="color:var(--warn);font-weight:600">${txt}</span>${falta?`<div class="tagprov" style="color:var(--danger)">↳ indica la razón</div>`:""}`;
+}
+function renderComprador(){
+  if(state.ui.compradorRuta) return renderRutaDetalle(state.ui.compradorRuta);
+  const rutas=porRuta();
+  const cards=Object.keys(rutas).map(ruta=>{
+    const grp=rutas[ruta];
+    const monto=grp.items.reduce((s,it)=>s+state.compra[it.k].comprado*it.costo,0);
+    const done=grp.items.every(it=>state.compra[it.k].done);
+    return `<button class="routecard ${done?'done':''}" onclick="abrirRuta('${ruta}')">
+      ${done?`<span class="rc-done">✓ Comprada</span>`:""}
+      <div class="rc-ic">🚚</div>
+      <h3>${ruta}</h3>
+      <div class="rc-prov">${PROVEEDORES[grp.prov].nombre}</div>
+      <div class="rc-stats">
+        <div><div class="v">${grp.items.length}</div><div class="k">productos</div></div>
+        <div><div class="v">${money(monto)}</div><div class="k">monto aprox.</div></div>
+      </div></button>`;
+  }).join("");
+  return `
+  ${stepBar("compra")}
+  <div class="page-head">
+    <div class="eyebrow">Comprador · Tablero 1 de compra</div>
+    <h2>Elige una ruta para salir a comprar</h2>
+    <p>Cada tarjeta es una ruta con su proveedor y un resumen del pedido. Entra para ver qué comprar, ajustar cantidades y subir comprobantes.</p>
+  </div>
+  <div class="routegrid">${cards||`<div class="empty">No hay nada consolidado todavía.</div>`}</div>`;
+}
+function renderRutaDetalle(r){
+  const grp=porRuta()[r];
+  if(!grp){ state.ui.compradorRuta=null; return renderComprador(); }
+  const rows=grp.items.map(it=>{
+    const c=state.compra[it.k], dif=c.comprado-it.aComprar;
+    const razSel=RAZONES.map(x=>`<option ${x===(c.razon||RAZONES[0])?"selected":""}>${x}</option>`).join("");
+    return `<tr>
+      <td><b>${getProd(it.sku).desc}</b><div class="tagprov">pedido ${fmt(it.pedido)} pz</div></td>
+      <td class="num">${fmt(it.aComprar)} pz<div class="tagprov">${fmt(it.cajas)} caja(s)</div></td>
+      <td class="num"><input class="miniinput" type="number" min="0" step="1" value="${c.comprado}" oninput="setComprado('${it.k}',this.value)">
+        <div id="diff_${slug(it.k)}" style="margin-top:4px;font-size:11.5px">${difCellHTML(dif,c.razon)}</div></td>
+      <td><select onchange="setRazon('${it.k}',this.value)" style="width:100%;min-width:150px;height:34px;border:1px solid var(--line);border-radius:8px;padding:0 8px;background:var(--surface)">${razSel}</select></td>
+      <td><label class="filebtn">📷 Subir<input type="file" accept="image/*" onchange="addFoto('${it.k}',this.files)"></label>${c.fotos.length?`<span class="tagprov" style="margin-left:6px;color:var(--ok)">✓ ${c.fotos.length}</span>`:""}</td>
+    </tr>`;
+  }).join("");
+  const subtotal=grp.items.reduce((s,it)=>s+state.compra[it.k].comprado*it.costo,0);
+  return `
+  ${stepBar("compra")}
+  <button class="backbtn" onclick="cerrarRuta()">← Volver a rutas</button>
+  <div class="page-head">
+    <div class="eyebrow">${PROVEEDORES[grp.prov].nombre}</div>
+    <h2>${r}</h2>
+    <p>Ajusta lo que realmente compraste, indica la razón si cambió la cantidad y sube el comprobante de cada producto.</p>
+  </div>
+  <div class="card">
+    <div class="card-head"><div><h3>${grp.items.length} productos</h3><span class="sub">Subtotal comprado</span></div><span class="badge b-sent" id="sub_${slug(r)}">${money(subtotal)}</span></div>
+    <div class="card-pad" style="padding:0 6px;overflow-x:auto">
+      <table><thead><tr><th>Producto</th><th class="num">Plan</th><th class="num">Comprado</th><th>Razón del cambio</th><th>Comprobante</th></tr></thead><tbody>${rows}</tbody></table>
+    </div>
+  </div>
+  <div style="text-align:right;margin-top:14px"><button class="btn primary" onclick="confirmarRuta('${r}')">Confirmar compra de esta ruta ▸</button></div>`;
+}
+function abrirRuta(r){ state.ui.compradorRuta=r; render(); window.scrollTo(0,0); }
+function cerrarRuta(){ state.ui.compradorRuta=null; render(); window.scrollTo(0,0); }
+function confirmarRuta(r){ const grp=porRuta()[r]; if(grp) grp.items.forEach(it=>state.compra[it.k].done=true); state.ui.compradorRuta=null; render(); window.scrollTo(0,0); }
+function updateRutaSub(r){ const grp=porRuta()[r]; if(!grp) return; const sub=grp.items.reduce((s,it)=>s+state.compra[it.k].comprado*it.costo,0); const el=$("sub_"+slug(r)); if(el) el.textContent=money(sub); }
+function setComprado(k,v){                                     // sin re-render
+  state.compra[k].comprado=Math.max(0,Math.round(Number(v)||0));
+  const it=consolidar()[k]; if(!it) return;
+  const d=$("diff_"+slug(k)); if(d) d.innerHTML=difCellHTML(state.compra[k].comprado-it.aComprar, state.compra[k].razon);
+  updateRutaSub(it.ruta);
+}
+function setRazon(k,v){
+  state.compra[k].razon=v;
+  const it=consolidar()[k]; if(!it) return;
+  const d=$("diff_"+slug(k)); if(d) d.innerHTML=difCellHTML(state.compra[k].comprado-it.aComprar, v);
+}
+function addFoto(k,files){
+  if(!files||!files[0]) return;
+  const r=new FileReader();
+  r.onload=e=>{ state.compra[k].fotos.push(e.target.result); render(); };
+  r.readAsDataURL(files[0]);
+}
+
+/* ============================================================
+   9. ALMACÉN · TABLERO 2 (entrega por sucursal)
+   ============================================================ */
+function faltHTML(f){ return f>0?`<span class="badge b-warn">${fmt(f)}</span>`:`<span class="tagprov">0</span>`; }
+function renderAlmacen(){
+  const tab=state.ui.almacenTab, cons=consolidar();
+  const tabs=Object.keys(SUCS).map(suc=>{
+    const n=Object.keys(cons).filter(k=>cons[k].porSuc[suc]).length;
+    const done=!!state.validacion[suc];
+    return `<button class="tab ${tab===suc?'active':''}" onclick="setAlmTab('${suc}')">${done?'✓ ':''}${SUCS[suc]} <span class="pill">${n}</span></button>`;
+  }).join("");
+  const tabSob=`<button class="tab ${tab==='sobrante'?'active':''}" onclick="setAlmTab('sobrante')">Sobrante <span class="pill">${sobrantesFilas().length}</span></button>`;
+  return `
+  ${stepBar("entrega")}
+  <div class="page-head">
+    <div class="eyebrow">Almacén · Tablero 2 de entrega</div>
+    <h2>Entregar a cada sucursal</h2>
+    <p>Cada sucursal tiene su pestaña. Captura manualmente lo entregado y lo dañado; al final el encargado valida la recepción con hora de llegada y de término. Lo que sobra se asigna en la pestaña de Sobrante.</p>
+  </div>
+  <div class="tabs">${tabs}${tabSob}</div>
+  ${tab==='sobrante' ? panelSobrante() : panelEntrega(tab,cons)}`;
+}
+function setAlmTab(t){ state.ui.almacenTab=t; render(); window.scrollTo(0,0); }
+function panelEntrega(suc,cons){
+  const items=[];
+  for(const k in cons){ const it=cons[k]; if(it.porSuc[suc]) items.push({k,sku:it.sku,prov:it.prov,aEntregar:it.porSuc[suc]}); }
+  if(!items.length) return `<div class="card"><div class="empty">Esta sucursal no tiene productos asignados.</div></div>`;
+  const rows=items.map(it=>{
+    const ek=suc+"|"+it.k;
+    const e=state.entrega[ek] || (state.entrega[ek]={entregado:it.aEntregar, danado:0});
+    const falt=Math.max(0, it.aEntregar-e.entregado);          // faltante = a entregar - entregado (dañado aparte)
+    return `<tr>
+      <td>${getProd(it.sku).desc}<div class="tagprov">${PROVEEDORES[it.prov].nombre}</div></td>
+      <td class="num">${fmt(it.aEntregar)}</td>
+      <td class="num"><input class="miniinput" type="number" min="0" step="1" value="${e.entregado}" oninput="setEntregado('${ek}',this.value)"></td>
+      <td class="num"><input class="miniinput" type="number" min="0" step="1" value="${e.danado}" oninput="setDanado('${ek}',this.value)"></td>
+      <td class="num" id="falt_${slug(ek)}">${faltHTML(falt)}</td>
+    </tr>`;
+  }).join("");
+  const v=state.validacion[suc];
+  const valBox = v
+    ? `<div class="notice ok" style="margin:0">✓ Recibido por <b>${v.nombre}</b> · ${v.fecha} · llegada ${v.llegada||"—"} · término ${v.fin||"—"} <button class="btn ghost sm" style="margin-left:8px" onclick="reabrirEntrega('${suc}')">Editar</button></div>`
+    : `<div class="timefields" style="margin:0">
+        <div class="fld"><label>Encargado de almacén</label><select id="valNm_${suc}">${ENCARGADOS.map(n=>`<option>${n}</option>`).join("")}</select></div>
+        <div class="fld"><label>Fecha</label><input id="valFe_${suc}" type="date" value="${hoy()}"></div>
+        <div class="fld"><label>Hora de llegada</label><input id="valLl_${suc}" type="time" value="08:00"></div>
+        <div class="fld"><label>Hora de término</label><input id="valFi_${suc}" type="time" value="08:30"></div>
+        <button class="btn primary" onclick="validarEntrega('${suc}')">Validar recepción</button>
+      </div>`;
+  return `<div class="card">
+    <div class="card-head"><div><h3>${SUCS[suc]}</h3><span class="sub">Entrega manual · ${items.length} productos</span></div>${v?`<span class="badge b-val">✓ Recibido</span>`:`<span class="badge b-sent">Pendiente</span>`}</div>
+    <div class="card-pad" style="padding:0 6px"><table><thead><tr><th>Producto</th><th class="num">A entregar</th><th class="num">Entregado</th><th class="num">Dañado</th><th class="num">Faltante</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="card-pad" style="border-top:1px solid var(--line-soft)">${valBox}</div>
+  </div>`;
+}
+function setEntregado(ek,v){ state.entrega[ek].entregado=Math.max(0,Math.round(Number(v)||0)); refreshFalt(ek); }
+function setDanado(ek,v){ state.entrega[ek].danado=Math.max(0,Math.round(Number(v)||0)); refreshFalt(ek); }
+function refreshFalt(ek){                                      // sin re-render
+  const [suc,sku,prov]=ek.split("|"); const it=consolidar()[sku+"|"+prov]; if(!it) return;
+  const e=state.entrega[ek], f=Math.max(0,(it.porSuc[suc]||0)-e.entregado);
+  const el=$("falt_"+slug(ek)); if(el) el.innerHTML=faltHTML(f);
+}
+function validarEntrega(suc){
+  const nm=$("valNm_"+suc).value; if(nm===ENCARGADOS[0]){ $("valNm_"+suc).focus(); return; }
+  state.validacion[suc]={nombre:nm, fecha:$("valFe_"+suc).value||hoy(), llegada:$("valLl_"+suc).value, fin:$("valFi_"+suc).value};
+  render();
+}
+function reabrirEntrega(suc){ delete state.validacion[suc]; render(); }
+function sobrantesFilas(){
+  const cons=consolidar(), filas=[];
+  for(const k in cons){
+    const c=state.compra[k]; if(!c) continue;
+    let ent=0,dan=0; for(const suc in SUCS){ const e=state.entrega[suc+"|"+k]; if(e){ent+=e.entregado;dan+=e.danado;} }
+    const sobra=c.comprado-ent-dan;
+    if(sobra>0) filas.push({k, sku:cons[k].sku, sobra});
+  }
+  return filas;
+}
+function panelSobrante(){
+  const filas=sobrantesFilas();
+  if(!filas.length) return `<div class="card"><div class="empty">✓<br>No hay sobrante por asignar.</div></div>`;
+  const pendiente=filas.some(f=>!state.sobrante[f.k]);
+  const rows=filas.map(f=>`<tr>
+    <td>${getProd(f.sku).desc}</td>
+    <td class="num"><b>${fmt(f.sobra)}</b> pz</td>
+    <td><select onchange="setDestino('${f.k}',this.value)" style="height:34px;border:1px solid var(--line);border-radius:8px;padding:0 9px;background:var(--surface)">
+      <option value="" ${!state.sobrante[f.k]?"selected":""}>— Selecciona —</option>
+      ${ALMACENES.map(a=>`<option ${state.sobrante[f.k]===a?"selected":""}>${a}</option>`).join("")}</select></td>
+  </tr>`).join("");
+  return `<div class="card">
+    <div class="card-head"><div><h3>Sobrante por asignar</h3><span class="sub">Comprado que no se entregó a sucursales</span></div>${state.sobranteOk&&!pendiente?`<span class="badge b-val">✓ Asignado</span>`:`<span class="badge b-warn">${filas.length} pendiente(s)</span>`}</div>
+    <div class="card-pad" style="padding:0 6px"><table><thead><tr><th>Producto</th><th class="num">Sobrante</th><th>¿Dónde se queda?</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="card-pad" style="border-top:1px solid var(--line-soft);text-align:right"><button class="btn primary" onclick="guardarSobrante()">Guardar asignación ✓</button></div>
+  </div>`;
+}
+function setDestino(k,v){ state.sobrante[k]=v; }
+function guardarSobrante(){
+  for(const f of sobrantesFilas()){ if(!state.sobrante[f.k]){ alert("Asigna un destino a todos los sobrantes antes de guardar."); return; } }
+  state.sobranteOk=true; render();
+}
+
+/* ============================================================
+   10. REPORTE · CIERRE
+   ============================================================ */
+function inRango(o){
+  const d=o.fecha||"", a=state.ui.repDesde, b=state.ui.repHasta, m=state.ui.repMes;
+  if(m && !d.startsWith(m)) return false;
+  if(a && d<a) return false;
+  if(b && d>b) return false;
+  return true;
+}
+function setRep(campo,v){ state.ui[campo]=v; render(); }
+function limpiarRep(){ state.ui.repDesde=""; state.ui.repHasta=""; state.ui.repMes=""; render(); }
+function toggleOrden(suc){ state.ui.repOrden = state.ui.repOrden===suc ? null : suc; render(); }
+function renderReporte(){
+  const cons=consolidar((suc,o)=>inRango(o));
+  let gasto=0, planeado=0, pedidoT=0, entregadoT=0, danadoT=0, faltanteT=0, sobranteT=0;
+  const detRows=Object.keys(cons).map(k=>{
+    const it=cons[k], c=state.compra[k]||{comprado:it.aComprar};
+    let ent=0, dan=0; for(const suc in SUCS){ const e=state.entrega[suc+"|"+k]; if(e){ ent+=e.entregado; dan+=e.danado; } }
+    const falt=Math.max(0,it.pedido-ent);                      // faltante = pedido - entregado
+    const sob=Math.max(0,c.comprado-ent-dan);
+    const g=c.comprado*it.costo, pl=it.aComprar*it.costo;
+    gasto+=g; planeado+=pl; pedidoT+=it.pedido; entregadoT+=ent; danadoT+=dan; faltanteT+=falt; sobranteT+=sob;
+    const destino = state.sobrante[k]||(sob>0?"— sin asignar":"");
+    return `<tr>
+      <td>${getProd(it.sku).desc}<div class="tagprov">${PROVEEDORES[it.prov].nombre}</div></td>
+      <td class="num">${fmt(it.pedido)}</td>
+      <td class="num">${fmt(c.comprado)}</td>
+      <td class="num">${fmt(ent)}</td>
+      <td class="num">${dan>0?`<span style="color:var(--danger)">${fmt(dan)}</span>`:"0"}</td>
+      <td class="num">${falt>0?`<span style="color:var(--warn)">${fmt(falt)}</span>`:"0"}</td>
+      <td class="num">${sob>0?`${fmt(sob)}<div class="tagprov">${destino}</div>`:"0"}</td>
+      <td class="num">${money(g)}</td>
+    </tr>`;
+  }).join("");
+  const dif=gasto-planeado;
+
+  // Órdenes validadas dentro del periodo
+  let ocIdx=0; const folioMap={};
+  const ocRows=Object.keys(state.ordenes).map(suc=>{
+    const o=state.ordenes[suc];
+    if(o.status!=="validada" || !inRango(o)) return "";
+    ocIdx++; const folio=o.folio||("OC-"+String(ocIdx).padStart(3,"0")); folioMap[suc]=folio;
+    const tot=o.lineas.reduce((s,l)=>s+piezasLinea(l)*cfgOf(l.sku,l.prov).costo,0);
+    const sel=state.ui.repOrden===suc;
+    return `<tr onclick="toggleOrden('${suc}')" style="cursor:pointer;${sel?'background:var(--accent-soft)':''}">
+      <td><b>${sel?"▾":"▸"} ${folio}</b></td>
+      <td>${SUCS[suc]}</td>
+      <td>${o.fecha||"—"}</td>
+      <td class="num">${o.lineas.length}</td>
+      <td class="num">${money(tot)}</td>
+      <td>${badgeEtapa(faseOrdenActiva(suc).fase, faseOrdenActiva(suc).label)}</td>
+    </tr>`;
+  }).join("");
+  const sinOC = ocIdx===0;
+
+  // Detalle inferior: la orden seleccionada sustituye el consolidado
+  const sel=state.ui.repOrden;
+  const ordenValida = sel && state.ordenes[sel] && state.ordenes[sel].status==="validada" && inRango(state.ordenes[sel]);
+  let detalleCard;
+  if(ordenValida){
+    const o=state.ordenes[sel], folio=folioMap[sel]||"OC", v=state.validacion[sel];
+    const recep = v
+      ? `<span style="color:var(--ok)">✓ Recepcionó <b>${v.nombre}</b></span> · ${v.fecha} · llegada ${v.llegada||"—"} · término ${v.fin||"—"}`
+      : `<span style="color:var(--warn)">Pendiente de recepción en Almacén</span>`;
+    const lr=o.lineas.map(l=>{const p=getProd(l.sku),pz=piezasLinea(l);
+      return `<tr><td>${p.desc}<div class="tagprov">${p.sku}</div></td><td>${PROVEEDORES[l.prov].nombre} · ${PROVEEDORES[l.prov].ruta}</td><td>${l.unidad==="caja"?fmt(l.cant)+" caja(s)":fmt(l.cant)+" pz"}</td><td class="num">${fmt(pz)}</td><td class="num">${money(pz*cfgOf(l.sku,l.prov).costo)}</td></tr>`;}).join("");
+    const totO=o.lineas.reduce((s,l)=>s+piezasLinea(l)*cfgOf(l.sku,l.prov).costo,0);
+    detalleCard=`<div class="card">
+      <div class="card-head"><div><h3 style="display:flex;align-items:center;gap:10px">Detalle de ${folio} · ${SUCS[sel]} ${badgeEtapa(faseOrdenActiva(sel).fase, faseOrdenActiva(sel).label)}</h3><span class="sub">${recep}</span></div><button class="btn sm" onclick="toggleOrden('${sel}')">← Ver consolidado</button></div>
+      <div class="card-pad" style="padding:0 6px"><table><thead><tr><th>Producto</th><th>Proveedor</th><th>Captura</th><th class="num">Piezas</th><th class="num">Estimado</th></tr></thead><tbody>${lr}</tbody>
+      <tfoot><tr><td colspan="4" style="text-align:right;font-weight:600;border-top:1px solid var(--line)">Total estimado</td><td class="num" style="font-weight:600;border-top:1px solid var(--line)">${money(totO)}</td></tr></tfoot></table></div>
+    </div>`;
+  } else {
+    detalleCard=`<div class="card"><div class="card-head"><h3>Detalle por producto</h3><span class="sub">${Object.keys(cons).length} líneas · da clic en una orden de arriba para ver su detalle</span></div>
+      <div class="card-pad" style="padding:0 6px">
+        <table><thead><tr><th>Producto</th><th class="num">Pedido</th><th class="num">Comprado</th><th class="num">Entregado</th><th class="num">Dañado</th><th class="num">Faltante</th><th class="num">Sobrante</th><th class="num">Gasto</th></tr></thead>
+        <tbody>${detRows||`<tr><td colspan="8" class="empty">Sin datos en el periodo.</td></tr>`}</tbody></table>
+      </div></div>`;
+  }
+
+  return `
+  ${stepBar("cierre")}
+  <div class="page-head">
+    <div class="eyebrow">Administración general · Cierre</div>
+    <h2>Reporte del ciclo de compra</h2>
+    <p>Resumen de lo pedido, comprado, entregado, dañado, faltante y sobrante, con el gasto total del periodo.</p>
+  </div>
+  <div class="card"><div class="card-pad" style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap">
+    <div class="fld"><label>Mes</label><input type="month" value="${state.ui.repMes}" oninput="setRep('repMes',this.value)"></div>
+    <div style="width:1px;height:34px;background:var(--line)"></div>
+    <div class="fld"><label>Desde</label><input type="date" value="${state.ui.repDesde}" oninput="setRep('repDesde',this.value)"></div>
+    <div class="fld"><label>Hasta</label><input type="date" value="${state.ui.repHasta}" oninput="setRep('repHasta',this.value)"></div>
+    <button class="btn sm" onclick="limpiarRep()">Limpiar filtro</button>
+    <span class="ob-sum" style="margin-left:auto">${ocIdx} orden(es) en el periodo</span>
+  </div></div>
+  <div class="metrics" style="margin-top:16px">
+    <div class="metric"><div class="lbl">Gasto total</div><div class="val">${money(gasto)}</div></div>
+    <div class="metric ${dif>0?'bad':dif<0?'good':''}"><div class="lbl">vs. plan (${money(planeado)})</div><div class="val">${dif>0?"+":""}${money(dif)}</div></div>
+    <div class="metric"><div class="lbl">Piezas pedidas</div><div class="val">${fmt(pedidoT)}</div></div>
+    <div class="metric"><div class="lbl">Piezas entregadas</div><div class="val">${fmt(entregadoT)}</div></div>
+    <div class="metric ${danadoT>0?'bad':''}"><div class="lbl">Dañado</div><div class="val">${fmt(danadoT)}</div></div>
+    <div class="metric ${faltanteT>0?'warn':''}"><div class="lbl">Faltante</div><div class="val">${fmt(faltanteT)}</div></div>
+    <div class="metric ${sobranteT>0?'warn':''}"><div class="lbl">Sobrante</div><div class="val">${fmt(sobranteT)}</div></div>
+  </div>
+  <div class="card"><div class="card-head"><h3>Órdenes de compra</h3><span class="sub">Da clic en una orden para ver su detalle</span></div>
+    <div class="card-pad" style="padding:0 6px">
+      <table><thead><tr><th>Folio</th><th>Sucursal</th><th>Fecha</th><th class="num">Productos</th><th class="num">Estimado</th><th>Estado</th></tr></thead>
+      <tbody>${sinOC?`<tr><td colspan="6" class="empty">No hay órdenes en el periodo seleccionado.</td></tr>`:ocRows}</tbody></table>
+    </div></div>
+  ${detalleCard}`;
+}
+
+/* ============================================================
+   11. INICIO DE LA APP
+   ============================================================ */
+for(const s in state.ordenes) state.ordenes[s].fecha = "2026-05-28";   // jueves de pedido (demo)
+state.ui.calMes = "2026-05";
+state.ui.calRef = hoy();
+render();
+</script>
+</body>
+</html>
